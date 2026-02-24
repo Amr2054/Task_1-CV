@@ -2,6 +2,9 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 import os
+import matplotlib.pyplot as plt
+from io import BytesIO
+from PIL import Image
 
 def compute_histogram_stats(img):
     """
@@ -18,7 +21,7 @@ def compute_histogram_stats(img):
     if img.ndim == 2:
         hist = np.zeros(256, dtype=int)
         for v in img.flatten():
-            hist[v] += 1
+            hist[v] += 1   
 
         pdf = hist / img.size
         cdf = pdf.cumsum()
@@ -41,61 +44,7 @@ def compute_histogram_stats(img):
 
         return hist, pdf, cdf
 
-
-
-def draw_distribution(img, mode="hist", title="", save_path=None):
-    """
-    mode: 'hist', 'pdf', 'cdf'
-    """
-
-    hist, pdf, cdf = compute_histogram_stats(img)
-
-    plt.figure(figsize=(8, 4))
-
-    # ==========================
-    # Grayscale
-    if img.ndim == 2:
-        if mode == "hist":
-            plt.bar(range(256), hist, color='gray', width=1)
-            plt.ylabel("Frequency")
-
-        elif mode == "pdf":
-            plt.plot(range(256), pdf, color='black', linewidth=2)
-            plt.ylabel("Probability")
-
-        elif mode == "cdf":
-            plt.plot(range(256), cdf, color='blue', linewidth=2)
-            plt.ylabel("Cumulative Probability")
-
-    # ==========================
-    # RGB
-    else:
-        colors = ['r', 'g', 'b']
-        for c in range(3):
-            if mode == "hist":
-                plt.plot(range(256), hist[c], color=colors[c], label=colors[c].upper())
-                plt.ylabel("Frequency")
-
-            elif mode == "pdf":
-                plt.plot(range(256), pdf[c], color=colors[c], label=colors[c].upper())
-                plt.ylabel("Probability")
-
-            elif mode == "cdf":
-                plt.plot(range(256), cdf[c], color=colors[c], label=colors[c].upper())
-                plt.ylabel("Cumulative Probability")
-
-        plt.legend()
-
-    plt.title(title)
-    plt.xlabel("Pixel Value")
-    plt.xlim([0, 255])
-    plt.grid(alpha=0.3)
-
-    if save_path:
-        plt.savefig(save_path)
-
-    plt.show()
-
+ 
 
 def get_distribution_as_image(img, mode="hist", title="", figsize=(8, 4)):
     """
@@ -110,8 +59,6 @@ def get_distribution_as_image(img, mode="hist", title="", figsize=(8, 4)):
     Returns:
         numpy array of the plot as an image
     """
-    import matplotlib.pyplot as plt
-    from io import BytesIO
 
     hist, pdf, cdf = compute_histogram_stats(img)
 
@@ -158,7 +105,6 @@ def get_distribution_as_image(img, mode="hist", title="", figsize=(8, 4)):
     buf.seek(0)
     
     # Read as image
-    from PIL import Image
     img_pil = Image.open(buf)
     plot_image = np.array(img_pil)
     
@@ -218,7 +164,6 @@ def to_grayscale(img):
     Uses the standard luminosity formula: 0.299*R + 0.587*G + 0.114*B
     """
     if img.ndim == 3:
-        import numpy as np
 
         # Extract B, G, R channels
         b = img[:, :, 0]

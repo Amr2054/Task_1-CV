@@ -4,8 +4,6 @@ Histogram controller for managing histogram equalization and distribution
 import cv2
 from PyQt5.QtWidgets import QMessageBox
 from services.curves_service import (
-    compute_histogram_stats, 
-    draw_distribution, 
     histogram_equalization,
     get_distribution_as_image,
     to_grayscale
@@ -182,37 +180,4 @@ class HistogramController:
         except Exception as e:
             self.main_controller.show_error(f"Failed to convert to grayscale: {str(e)}")
 
-    def compute_stats(self, img):
-        """
-        Compute histogram statistics for an image
-
-        Args:
-            img: Input image (grayscale or RGB)
-
-        Returns:
-            hist, pdf, cdf: Histogram statistics
-        """
-        return compute_histogram_stats(img)
-
-    def equalize_image(self, img):
-        """
-        Apply histogram equalization to an image
-
-        Args:
-            img: Input image (grayscale or RGB)
-
-        Returns:
-            Equalized image
-        """
-        return histogram_equalization(img)
-
-    def show_distribution(self, img, mode="hist", title="Distribution"):
-        """
-        Display histogram distribution
-        
-        Args:
-            img: Input image
-            mode: 'hist', 'pdf', or 'cdf'
-            title: Title for the plot
-        """
-        draw_distribution(img, mode=mode, title=title)
+    

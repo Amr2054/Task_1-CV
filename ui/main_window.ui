@@ -351,6 +351,11 @@ padding-right: 8px;</string>
            <string>Histogram &amp; Normalize</string>
           </property>
          </item>
+         <item>
+          <property name="text">
+           <string>Frequency Domain</string>
+          </property>
+         </item>
         </widget>
        </item>
        <item>
@@ -1582,6 +1587,197 @@ padding: 20px;</string>
            </item>
           </layout>
          </widget>
+
+
+
+
+        
+        <widget class="QWidget" name="frequencyPage">
+            <layout class="QVBoxLayout" name="verticalLayout_freqOuter">
+            <property name="spacing"><number>16</number></property>
+
+            <!-- Vertical spacer top -->
+            <item>
+            <spacer name="verticalSpacerFreqTop">
+                <property name="orientation"><enum>Qt::Vertical</enum></property>
+                <property name="sizeHint" stdset="0"><size><width>20</width><height>20</height></size></property>
+            </spacer>
+            </item>
+
+            <!-- Three image boxes -->
+            <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_freqBoxes">
+                <property name="spacing"><number>24</number></property>
+
+                <!-- Horizontal spacer left -->
+                <item>
+                <spacer name="horizontalSpacerFreqLeft">
+                <property name="orientation"><enum>Qt::Horizontal</enum></property>
+                <property name="sizeHint" stdset="0"><size><width>20</width><height>20</height></size></property>
+                </spacer>
+                </item>
+
+                <!-- Left column: Low Pass (top) + High Pass (bottom) -->
+                <item>
+                <layout class="QVBoxLayout" name="verticalLayout_freqLeft">
+                <property name="spacing"><number>16</number></property>
+
+                <!-- Low Pass box -->
+                <item>
+                <widget class="QGroupBox" name="freqLowPassGroup">
+                    <property name="title"><string>Low Freq Only</string></property>
+                    <layout class="QVBoxLayout" name="vlFreqLow">
+                    <item>
+                    <widget class="QLabel" name="imgFreqLowPass">
+                    <property name="minimumSize"><size><width>420</width><height>260</height></size></property>
+                    <property name="styleSheet">
+                        <string notr="true">background:#0f0f25; border:2px solid #667eea; border-radius:8px; color:#8892b0; font-size:12px;</string>
+                    </property>
+                    <property name="text"><string>Upload image to apply Low Pass</string></property>
+                    <property name="alignment"><set>Qt::AlignCenter</set></property>
+                    </widget>
+                    </item>
+                    <item>
+                    <widget class="QPushButton" name="btnUploadLowPass">
+                    <property name="text"><string>Upload Image (Low Pass)</string></property>
+                    </widget>
+                    </item>
+                    </layout>
+                </widget>
+                </item>
+
+                <!-- High Pass box -->
+                <item>
+                <widget class="QGroupBox" name="freqHighPassGroup">
+                    <property name="title"><string>High Freq Only</string></property>
+                    <layout class="QVBoxLayout" name="vlFreqHigh">
+                    <item>
+                    <widget class="QLabel" name="imgFreqHighPass">
+                    <property name="minimumSize"><size><width>420</width><height>260</height></size></property>
+                    <property name="styleSheet">
+                        <string notr="true">background:#0f0f25; border:2px solid #667eea; border-radius:8px; color:#8892b0; font-size:12px;</string>
+                    </property>
+                    <property name="text"><string>Upload image to apply High Pass</string></property>
+                    <property name="alignment"><set>Qt::AlignCenter</set></property>
+                    </widget>
+                    </item>
+                    <item>
+                    <widget class="QPushButton" name="btnUploadHighPass">
+                    <property name="text"><string>Upload Image (High Pass)</string></property>
+                    </widget>
+                    </item>
+                    </layout>
+                </widget>
+                </item>
+
+                </layout>
+                </item>
+
+                <!-- Right: Hybrid Image -->
+                <item>
+                <widget class="QGroupBox" name="freqHybridGroup">
+                <property name="title"><string>Hybrid (Sum) Image</string></property>
+                <layout class="QVBoxLayout" name="vlFreqHybrid">
+                <item>
+                    <widget class="QLabel" name="imgFreqHybrid">
+                    <property name="minimumSize"><size><width>480</width><height>560</height></size></property>
+                    <property name="styleSheet">
+                    <string notr="true">background:#0f0f25; border:2px solid #764ba2; border-radius:8px; color:#8892b0; font-size:12px;</string>
+                    </property>
+                    <property name="text"><string>Hybrid image will appear here</string></property>
+                    <property name="alignment"><set>Qt::AlignCenter</set></property>
+                    </widget>
+                </item>
+                </layout>
+                </widget>
+                </item>
+
+                <!-- Horizontal spacer right -->
+                <item>
+                <spacer name="horizontalSpacerFreqRight">
+                <property name="orientation"><enum>Qt::Horizontal</enum></property>
+                <property name="sizeHint" stdset="0"><size><width>20</width><height>20</height></size></property>
+                </spacer>
+                </item>
+
+            </layout>
+            </item>
+
+            <!-- Bottom controls: sliders + generate hybrid button -->
+            <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_freqControls">
+                <property name="spacing"><number>16</number></property>
+
+                <item>
+                <widget class="QLabel" name="labelLowCutoff">
+                <property name="text"><string>Low Pass Cutoff:</string></property>
+                </widget>
+                </item>
+                <item>
+                <widget class="QSlider" name="sliderLowPassCutoff">
+                <property name="minimum"><number>5</number></property>
+                <property name="maximum"><number>150</number></property>
+                <property name="value"><number>30</number></property>
+                <property name="orientation"><enum>Qt::Horizontal</enum></property>
+                </widget>
+                </item>
+                <item>
+                <widget class="QLabel" name="labelLowCutoffVal">
+                <property name="minimumSize"><size><width>25</width><height>0</height></size></property>
+                <property name="text"><string>30</string></property>
+                </widget>
+                </item>
+
+                <item>
+                <widget class="QLabel" name="labelHighCutoff">
+                <property name="text"><string>High Pass Cutoff:</string></property>
+                </widget>
+                </item>
+                <item>
+                <widget class="QSlider" name="sliderHighPassCutoff">
+                <property name="minimum"><number>5</number></property>
+                <property name="maximum"><number>150</number></property>
+                <property name="value"><number>30</number></property>
+                <property name="orientation"><enum>Qt::Horizontal</enum></property>
+                </widget>
+                </item>
+                <item>
+                <widget class="QLabel" name="labelHighCutoffVal">
+                <property name="minimumSize"><size><width>25</width><height>0</height></size></property>
+                <property name="text"><string>30</string></property>
+                </widget>
+                </item>
+
+                <item>
+                <spacer name="horizontalSpacer_freq">
+                <property name="orientation"><enum>Qt::Horizontal</enum></property>
+                <property name="sizeHint" stdset="0"><size><width>20</width><height>20</height></size></property>
+                </spacer>
+                </item>
+
+                <item>
+                <widget class="QPushButton" name="btnGenerateHybrid">
+                <property name="text"><string>Generate Hybrid Image</string></property>
+                </widget>
+                </item>
+
+            </layout>
+            </item>
+
+            <!-- Vertical spacer bottom -->
+            <item>
+            <spacer name="verticalSpacerFreqBottom">
+                <property name="orientation"><enum>Qt::Vertical</enum></property>
+                <property name="sizeHint" stdset="0"><size><width>20</width><height>20</height></size></property>
+            </spacer>
+            </item>
+
+            </layout>
+            </widget>
+
+
+
+        
         </widget>
        </item>
       </layout>

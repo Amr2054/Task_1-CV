@@ -210,19 +210,40 @@ class MainController(QMainWindow):
         scaled = scale_pixmap(pixmap, label.width() - 20, label.height() - 20)
         label.setPixmap(scaled)
     
+    # def _on_mode_changed(self, index):
+    #     """
+    #     Handle mode change from combo box
+        
+    #     Args:
+    #         index: Selected mode index (0: Noise&Filters, 1: Edge Detection, 2: Histogram)
+    #     """
+    #     self.settingsStack.setCurrentIndex(index)
+        
+    #     # Clear output image when switching modes
+    #     self.imgOutput.clear()
+    #     self.imgOutput.setText("Processed image will appear here")
+    #     self.output_pixmap = None
+    
+    
+    
     def _on_mode_changed(self, index):
-        """
-        Handle mode change from combo box
-        
-        Args:
-            index: Selected mode index (0: Noise&Filters, 1: Edge Detection, 2: Histogram)
-        """
         self.settingsStack.setCurrentIndex(index)
-        
+
+        is_frequency = (index == 3)
+        self.scrollArea.setVisible(not is_frequency)
+
+        # Make settings container expand to fill space when in frequency mode
+        if is_frequency:
+            self.settingsContainer.setMaximumHeight(16777215)  # unlimited
+        else:
+            self.settingsContainer.setMaximumHeight(310)  # original constraint
+
         # Clear output image when switching modes
         self.imgOutput.clear()
         self.imgOutput.setText("Processed image will appear here")
         self.output_pixmap = None
+    
+    
     
     def _reset_view(self):
         """

@@ -15,6 +15,7 @@ from controllers.main_controller import MainController
 from controllers.noise_controller import NoiseController
 from controllers.filter_controller import FilterController
 from controllers.edge_controller import EdgeController
+from controllers.frequency_controller import FrequencyController
 
 
 def main():
@@ -35,6 +36,7 @@ def main():
     noise_controller = NoiseController(main_window)
     filter_controller = FilterController(main_window)
     edge_controller = EdgeController(main_window)
+    frequency_controller = FrequencyController(main_window)
 
     # Show the main window
     main_window.show()

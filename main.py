@@ -1,6 +1,5 @@
 """
 Image Studio - Professional Image Processing Application
-Version: 2.0
 
 Main entry point for the application.
 """

@@ -94,6 +94,7 @@ class MainController(QMainWindow):
         # Top bar buttons
         self.btnUploadOriginal.clicked.connect(self._upload_original_image)
         self.btnUndo.clicked.connect(self._undo_last_operation)
+        self.btnUndoAll.clicked.connect(self._undo_all_operations)
         self.btnReset.clicked.connect(self._reset_view)
         
         # Mode selector
@@ -194,7 +195,9 @@ class MainController(QMainWindow):
         """
         Update the enabled state of the undo button based on history
         """
-        self.btnUndo.setEnabled(self.image_loader.can_undo())
+        has_history = self.image_loader.can_undo()
+        self.btnUndo.setEnabled(has_history)
+        self.btnUndoAll.setEnabled(has_history)
     
     def _set_scaled_pixmap(self, label, pixmap):
         """
@@ -226,11 +229,41 @@ class MainController(QMainWindow):
     
     
     
+    def _undo_all_operations(self):
+        """
+        مسح كل الـ operations والرجوع للصورة الأصلية (مع إبقاء الـ original موجودة)
+        """
+        if not self.image_loader.has_image():
+            self.show_message(self, 'info', "No Image", "No image loaded.")
+            return
+        
+        # Clear output image
+        self.imgOutput.clear()
+        self.imgOutput.setText("Processed image will appear here")
+        self.output_pixmap = None
+        
+        # Clear frequency mode images (except original)
+        self.imgFreqHybrid.clear()
+        self.imgFreqHybrid.setText("Hybrid image will appear here")
+        
+        # Reset to original image
+        self.image_loader.reset_to_original()
+        
+        # Reset histogram controller cached image
+        if hasattr(self, 'histogram_controller'):
+            self.histogram_controller.equalized_image = None
+        
+        # Update undo button state
+        self._update_undo_button_state()
+    
     def _on_mode_changed(self, index):
         self.settingsStack.setCurrentIndex(index)
 
         is_frequency = (index == 3)
         self.scrollArea.setVisible(not is_frequency)
+        
+        # إخفاء زر Upload Original في frequency mode
+        self.btnUploadOriginal.setVisible(not is_frequency)
 
         # Make settings container expand to fill space when in frequency mode
         if is_frequency:
@@ -242,6 +275,10 @@ class MainController(QMainWindow):
         self.imgOutput.clear()
         self.imgOutput.setText("Processed image will appear here")
         self.output_pixmap = None
+        
+        # مسح الـ history عند تغيير الـ mode لجعل كل mode له history خاص به
+        self.image_loader.history = []
+        self._update_undo_button_state()
     
     
     
@@ -255,6 +292,14 @@ class MainController(QMainWindow):
         self.imgOutput.clear()
         self.imgOutput.setText("Processed image will appear here")
         
+        # Reset frequency mode images
+        self.imgFreqLowPass.clear()
+        self.imgFreqLowPass.setText("Upload image to apply Low Pass")
+        self.imgFreqHighPass.clear()
+        self.imgFreqHighPass.setText("Upload image to apply High Pass")
+        self.imgFreqHybrid.clear()
+        self.imgFreqHybrid.setText("Hybrid image will appear here")
+        
         # Clear stored pixmaps
         self.original_pixmap = None
         self.output_pixmap = None
@@ -263,11 +308,13 @@ class MainController(QMainWindow):
         if hasattr(self, 'histogram_controller'):
             self.histogram_controller.equalized_image = None
         
+        # Reset frequency controller images
+        if hasattr(self, 'frequency_controller'):
+            self.frequency_controller._img1 = None
+            self.frequency_controller._img2 = None
+        
         # Reset image loader
         self.image_loader = ImageLoader()
-        
-        # Reset mode to first page
-        self.modeCombo.setCurrentIndex(0)
     
     def resizeEvent(self, event):
         """

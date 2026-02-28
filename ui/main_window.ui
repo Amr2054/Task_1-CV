@@ -353,7 +353,7 @@ padding-right: 8px;</string>
          </item>
          <item>
           <property name="text">
-           <string>Frequency Domain</string>
+           <string>Frequency Domain &amp; Hybrid</string>
           </property>
          </item>
         </widget>
@@ -369,6 +369,13 @@ padding-right: 8px;</string>
         <widget class="QPushButton" name="btnUndo">
          <property name="text">
           <string>Undo</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnUndoAll">
+         <property name="text">
+          <string>Undo All</string>
          </property>
         </widget>
        </item>
@@ -1198,211 +1205,136 @@ padding: 20px;</string>
    <number>12</number>
   </property>
 
+  <!-- ================= LEFT : PARAMETERS ================= -->
   <item>
-   <widget class="QGroupBox" name="edgeDetectionGroup">
+   <widget class="QGroupBox" name="paramsGroup">
     <property name="title">
-     <string>Edge Detection Methods</string>
+     <string>Parameters</string>
     </property>
+    <layout class="QVBoxLayout" name="verticalLayout_params">
 
-    <layout class="QVBoxLayout" name="verticalLayout_9">
-     <property name="spacing">
-      <number>4</number>
-     </property>
+        <!-- Edge Kernel Size -->
+        <item>
+         <widget class="QLabel" name="labelEdgeKernel">
+          <property name="text"><string>Edge Kernel Size: 3</string></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSlider" name="sliderEdgeKernelSize">
+          <property name="minimum"><number>3</number></property>
+          <property name="maximum"><number>11</number></property>
+          <property name="value"><number>3</number></property>
+          <property name="singleStep"><number>2</number></property>
+          <property name="pageStep"><number>2</number></property>
+          <property name="orientation"><enum>Qt::Horizontal</enum></property>
+         </widget>
+        </item>
 
-     <!-- Radio Buttons -->
-
+     <!-- Threshold -->
      <item>
-      <widget class="QRadioButton" name="radioCanny">
-       <property name="text">
-        <string>Canny</string>
-       </property>
+      <widget class="QLabel" name="labelEdgeThreshold">
+       <property name="text"><string>Threshold: 100</string></property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QSlider" name="sliderEdgeThreshold">
+       <property name="maximum"><number>255</number></property>
+       <property name="value"><number>100</number></property>
+       <property name="orientation"><enum>Qt::Horizontal</enum></property>
+      </widget>
+     </item>
+
+     <!-- Weight -->
+     <item>
+      <widget class="QLabel" name="labelWeight">
+       <property name="text"><string>Weight: 1.0</string></property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QSlider" name="sliderWeight">
+       <property name="maximum"><number>50</number></property>
+       <property name="value"><number>10</number></property>
+       <property name="orientation"><enum>Qt::Horizontal</enum></property>
+      </widget>
+     </item>
+
+     <!-- Kx Scale -->
+     <item>
+      <widget class="QLabel" name="labelKx">
+       <property name="text"><string>Kx Scale: 1.0</string></property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QSlider" name="sliderKx">
+       <property name="maximum"><number>50</number></property>
+       <property name="value"><number>10</number></property>
+       <property name="orientation"><enum>Qt::Horizontal</enum></property>
+      </widget>
+     </item>
+
+     <!-- Ky Scale -->
+     <item>
+      <widget class="QLabel" name="labelKy">
+       <property name="text"><string>Ky Scale: 1.0</string></property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QSlider" name="sliderKy">
+       <property name="maximum"><number>50</number></property>
+       <property name="value"><number>10</number></property>
+       <property name="orientation"><enum>Qt::Horizontal</enum></property>
       </widget>
      </item>
 
      <item>
-      <widget class="QRadioButton" name="radioSobel">
-       <property name="text">
-        <string>Sobel</string>
-       </property>
-      </widget>
-     </item>
-
-     <item>
-      <widget class="QRadioButton" name="radioPrewitt">
-       <property name="text">
-        <string>Prewitt</string>
-       </property>
-      </widget>
-     </item>
-
-     <item>
-      <widget class="QRadioButton" name="radioRoberts">
-       <property name="text">
-        <string>Roberts</string>
-       </property>
-      </widget>
-     </item>
-
-     <!-- Slider Container -->
-
-     <item>
-      <widget class="QWidget" name="edgeSliderContainer" native="true">
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>150</height>
-        </size>
-       </property>
-
-       <layout class="QVBoxLayout" name="verticalLayout_edge">
-        <property name="spacing">
-         <number>3</number>
-        </property>
-        <property name="leftMargin">
-         <number>20</number>
-        </property>
-        <property name="topMargin">
-         <number>0</number>
-        </property>
-        <property name="rightMargin">
-         <number>0</number>
-        </property>
-        <property name="bottomMargin">
-         <number>0</number>
-        </property>
-
-        <!-- Threshold -->
-
-        <item>
-         <widget class="QSlider" name="sliderEdgeThreshold">
-          <property name="visible">
-           <bool>false</bool>
-          </property>
-          <property name="maximum">
-           <number>255</number>
-          </property>
-          <property name="value">
-           <number>100</number>
-          </property>
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-         </widget>
-        </item>
-
-        <item>
-         <widget class="QLabel" name="labelEdgeThreshold">
-          <property name="visible">
-           <bool>false</bool>
-          </property>
-          <property name="text">
-           <string>Threshold: 100</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignCenter</set>
-          </property>
-         </widget>
-        </item>
-
-        <!-- Weight -->
-
-        <item>
-         <widget class="QLabel" name="labelWeight">
-          <property name="text">
-           <string>Weight</string>
-          </property>
-         </widget>
-        </item>
-
-        <item>
-         <widget class="QSlider" name="sliderWeight">
-          <property name="maximum">
-           <number>50</number>
-          </property>
-          <property name="value">
-           <number>10</number>
-          </property>
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-         </widget>
-        </item>
-
-        <!-- Kx -->
-
-        <item>
-         <widget class="QLabel" name="labelKx">
-          <property name="text">
-           <string>Kx Scale</string>
-          </property>
-         </widget>
-        </item>
-
-        <item>
-         <widget class="QSlider" name="sliderKx">
-          <property name="maximum">
-           <number>50</number>
-          </property>
-          <property name="value">
-           <number>10</number>
-          </property>
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-         </widget>
-        </item>
-
-        <!-- Ky -->
-
-        <item>
-         <widget class="QLabel" name="labelKy">
-          <property name="text">
-           <string>Ky Scale</string>
-          </property>
-         </widget>
-        </item>
-
-        <item>
-         <widget class="QSlider" name="sliderKy">
-          <property name="maximum">
-           <number>50</number>
-          </property>
-          <property name="value">
-           <number>10</number>
-          </property>
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-         </widget>
-        </item>
-
-       </layout>
-      </widget>
-     </item>
-
-     <!-- Spacer -->
-
-     <item>
-      <spacer name="verticalSpacer_edge">
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>20</width>
-         <height>15</height>
-        </size>
-       </property>
+      <spacer name="verticalSpacer_params">
+       <property name="orientation"><enum>Qt::Vertical</enum></property>
       </spacer>
      </item>
 
-     <!-- Apply Button -->
+    </layout>
+   </widget>
+  </item>
+
+  <!-- ================= RIGHT : EDGE SELECTION ================= -->
+  <item>
+   <widget class="QGroupBox" name="edgeDetectionGroup">
+    <property name="title">
+     <string>Edge Detection</string>
+    </property>
+    <layout class="QVBoxLayout" name="verticalLayout_9">
+
+     <item>
+      <widget class="QRadioButton" name="radioCanny">
+       <property name="text"><string>Canny</string></property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="radioSobel">
+       <property name="text"><string>Sobel</string></property>
+       <property name="checked"><bool>true</bool></property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="radioPrewitt">
+       <property name="text"><string>Prewitt</string></property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="radioRoberts">
+       <property name="text"><string>Roberts</string></property>
+      </widget>
+     </item>
+
+     <item>
+      <spacer name="verticalSpacer_edge">
+       <property name="orientation"><enum>Qt::Vertical</enum></property>
+      </spacer>
+     </item>
 
      <item>
       <widget class="QPushButton" name="btnApplyEdgeDetection">
-       <property name="text">
-        <string>Apply Edge Detection</string>
-       </property>
+       <property name="text"><string>Apply Edge Detection</string></property>
       </widget>
      </item>
 
@@ -1410,26 +1342,8 @@ padding: 20px;</string>
    </widget>
   </item>
 
-  <!-- Right Spacer -->
-
-  <item>
-   <spacer name="horizontalSpacer_2">
-    <property name="orientation">
-     <enum>Qt::Horizontal</enum>
-    </property>
-    <property name="sizeHint" stdset="0">
-     <size>
-      <width>40</width>
-      <height>20</height>
-     </size>
-    </property>
-   </spacer>
-  </item>
-
  </layout>
 </widget>
-
-
          <widget class="QWidget" name="histogramPage">
           <layout class="QHBoxLayout" name="horizontalLayout_5">
            <property name="spacing">

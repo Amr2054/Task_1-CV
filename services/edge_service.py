@@ -7,7 +7,6 @@ from services.filter_service import FilterService
 # Gaussian Blur (uses FilterService)
 # ===========================
 def gaussian_blur(img, size=5, sigma=1.0):
-    """Apply Gaussian blur using FilterService"""
     kernel = FilterService._gaussian_kernel(size, sigma)
     return FilterService._convolve2d(img.astype(np.float32), kernel)
 

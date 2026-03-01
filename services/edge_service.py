@@ -31,12 +31,29 @@ def gaussian_blur(img, size=5, sigma=1.0):
 # Sobel Edge
 # ===========================
 def sobel_kernel(size):
+    if size == 3:
+        Kx = np.array([
+            [-1,0,1],
+            [-2,0,2],
+            [-1,0,1]
+        ], dtype=np.float32)
+
+        Ky = np.array([
+            [-1,-2,-1],
+            [ 0, 0, 0],
+            [ 1, 2, 1]
+        ], dtype=np.float32)
+        return Kx, Ky
+
+    # dynamic kernel
     k = size // 2
     x = np.arange(-k, k+1)
     y = np.arange(-k, k+1)
     xx, yy = np.meshgrid(x, y)
+
     Kx = xx / (xx**2 + yy**2 + 1e-5)
     Ky = yy / (xx**2 + yy**2 + 1e-5)
+
     return Kx, Ky
 
 def sobel_edge(img, size=3, weight=1.0, kx_scale=1.0, ky_scale=1.0):
@@ -61,12 +78,29 @@ def sobel_edge(img, size=3, weight=1.0, kx_scale=1.0, ky_scale=1.0):
 # Prewitt Edge
 # ===========================
 def prewitt_kernel(size):
-    Kx = np.tile(np.linspace(-1, 1, size), (size, 1))
+    if size == 3:
+        Kx = np.array([
+            [-1,0,1],
+            [-1,0,1],
+            [-1,0,1]
+        ], dtype=np.float32)
+
+        Ky = np.array([
+            [-1,-1,-1],
+            [ 0, 0, 0],
+            [ 1, 1, 1]
+        ], dtype=np.float32)
+
+        return Kx, Ky
+
+    # dynamic
+    Kx = np.tile(np.linspace(-1,1,size), (size,1))
     Ky = Kx.T
+
     Kx = Kx / np.max(np.abs(Kx))
     Ky = Ky / np.max(np.abs(Ky))
-    return Kx, Ky
 
+    return Kx, Ky
 def prewitt_edge(img, size=3, weight=1.0, kx_scale=1.0, ky_scale=1.0):
     Kx, Ky = prewitt_kernel(size)
     Kx *= kx_scale
@@ -105,14 +139,10 @@ def roberts_edge(img, weight=1.0, kx_scale=1.0, ky_scale=1.0):
 
     return np.clip(result, 0, 255).astype(np.uint8)
 
-# ===========================
-# Canny Edge مع Weight و Scale
-# ===========================
 def canny_edge_scaled(img, threshold=100, weight=1.0, kx_scale=1.0, ky_scale=1.0):
     gray = img if len(img.shape) == 2 else cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     blurred = gaussian_blur(gray, 5, 1.0)
 
-    # حساب gradients قبل Canny
     Kx, Ky = sobel_kernel(3)
     Gx = convolve2d(blurred, Kx) * kx_scale
     Gy = convolve2d(blurred, Ky) * ky_scale

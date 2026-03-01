@@ -213,22 +213,6 @@ class MainController(QMainWindow):
         scaled = scale_pixmap(pixmap, label.width() - 20, label.height() - 20)
         label.setPixmap(scaled)
     
-    # def _on_mode_changed(self, index):
-    #     """
-    #     Handle mode change from combo box
-        
-    #     Args:
-    #         index: Selected mode index (0: Noise&Filters, 1: Edge Detection, 2: Histogram)
-    #     """
-    #     self.settingsStack.setCurrentIndex(index)
-        
-    #     # Clear output image when switching modes
-    #     self.imgOutput.clear()
-    #     self.imgOutput.setText("Processed image will appear here")
-    #     self.output_pixmap = None
-    
-    
-    
     def _undo_all_operations(self):
         """
         مسح كل الـ operations والرجوع للصورة الأصلية (مع إبقاء الـ original موجودة)
@@ -256,31 +240,58 @@ class MainController(QMainWindow):
         # Update undo button state
         self._update_undo_button_state()
     
+    # def _on_mode_changed(self, index):
+    #     self.settingsStack.setCurrentIndex(index)
+
+    #     is_frequency = (index == 3)
+    #     self.scrollArea.setVisible(not is_frequency)
+        
+    #     # إخفاء زر Upload Original في frequency mode
+    #     self.btnUploadOriginal.setVisible(not is_frequency)
+
+    #     # Make settings container expand to fill space when in frequency mode
+    #     if is_frequency:
+    #         self.settingsContainer.setMaximumHeight(16777215)  # unlimited
+    #     else:
+    #         self.settingsContainer.setMaximumHeight(310)  # original constraint
+
+    #     # Clear output image when switching modes
+    #     self.imgOutput.clear()
+    #     self.imgOutput.setText("Processed image will appear here")
+    #     self.output_pixmap = None
+        
+    #     # مسح الـ history عند تغيير الـ mode لجعل كل mode له history خاص به
+    #     self.image_loader.history = []
+    #     self._update_undo_button_state()
+    
     def _on_mode_changed(self, index):
+        is_frequency = (index == 3)
+
+        # Update heights BEFORE changing visibility to avoid layout glitch
+        if is_frequency:
+            self.settingsContainer.setMaximumHeight(16777215)  # unlimited
+            self.scrollArea.setVisible(False)
+        else:
+            self.settingsContainer.setMaximumHeight(310)  # original constraint
+            self.scrollArea.setVisible(True)
+
         self.settingsStack.setCurrentIndex(index)
 
-        is_frequency = (index == 3)
-        self.scrollArea.setVisible(not is_frequency)
-        
         # إخفاء زر Upload Original في frequency mode
         self.btnUploadOriginal.setVisible(not is_frequency)
 
-        # Make settings container expand to fill space when in frequency mode
-        if is_frequency:
-            self.settingsContainer.setMaximumHeight(16777215)  # unlimited
-        else:
-            self.settingsContainer.setMaximumHeight(310)  # original constraint
+        # Force layout recalculation to prevent misplaced widgets
+        self.centralWidget().updateGeometry()
+        self.centralWidget().layout().activate()
 
         # Clear output image when switching modes
         self.imgOutput.clear()
         self.imgOutput.setText("Processed image will appear here")
         self.output_pixmap = None
-        
-        # مسح الـ history عند تغيير الـ mode لجعل كل mode له history خاص به
+
+        # مسح الـ history عند تغيير الـ mode
         self.image_loader.history = []
         self._update_undo_button_state()
-    
-    
     
     def _reset_view(self):
         """

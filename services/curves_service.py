@@ -15,7 +15,6 @@ def compute_histogram_stats(img):
 
     # ==========================
     # Grayscale
-    # ==========================
     if img.ndim == 2:
         hist = np.zeros(256, dtype=int)
         for v in img.flatten():
@@ -28,7 +27,6 @@ def compute_histogram_stats(img):
 
     # ==========================
     # RGB
-    # ==========================
     elif img.ndim == 3:
         hist = np.zeros((3, 256), dtype=int)
         pdf = np.zeros((3, 256))
@@ -56,7 +54,6 @@ def draw_distribution(img, mode="hist", title="", save_path=None):
 
     # ==========================
     # Grayscale
-    # ==========================
     if img.ndim == 2:
         if mode == "hist":
             plt.bar(range(256), hist, color='gray', width=1)
@@ -72,7 +69,6 @@ def draw_distribution(img, mode="hist", title="", save_path=None):
 
     # ==========================
     # RGB
-    # ==========================
     else:
         colors = ['r', 'g', 'b']
         for c in range(3):
@@ -123,7 +119,6 @@ def get_distribution_as_image(img, mode="hist", title="", figsize=(8, 4)):
 
     # ==========================
     # Grayscale
-    # ==========================
     if img.ndim == 2:
         if mode == "hist":
             plt.bar(range(256), hist, color='gray', width=1)
@@ -137,7 +132,6 @@ def get_distribution_as_image(img, mode="hist", title="", figsize=(8, 4)):
 
     # ==========================
     # RGB
-    # ==========================
     else:
         colors = ['r', 'g', 'b']
         for c in range(3):

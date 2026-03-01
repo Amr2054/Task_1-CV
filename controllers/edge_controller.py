@@ -1,58 +1,73 @@
 from services.edge_service import EdgeService
 
+
 class EdgeController:
+    
+    # Default slider values
+    DEFAULT_VALUES = {
+        'kernel_size': 3,
+        'threshold': 100,
+        'weight': 10,  # 1.0 actual
+        'kx': 10,      # 1.0 actual
+        'ky': 10       # 1.0 actual
+    }
+    
     def __init__(self, main_controller):
         self.main_controller = main_controller
         self.edge_service = EdgeService()
         self._connect_signals()
-        # تحديث العرض بناءً على نوع الحواف الحالي
+        self._initialize_controls()
+    
+    def _initialize_controls(self):
+        """Initialize all controls to default state"""
+        mc = self.main_controller
+        if hasattr(mc, 'sliderEdgeKernelSize'):
+            mc.sliderEdgeKernelSize.setValue(self.DEFAULT_VALUES['kernel_size'])
+        if hasattr(mc, 'sliderEdgeThreshold'):
+            mc.sliderEdgeThreshold.setValue(self.DEFAULT_VALUES['threshold'])
+        if hasattr(mc, 'sliderWeight'):
+            mc.sliderWeight.setValue(self.DEFAULT_VALUES['weight'])
+        if hasattr(mc, 'sliderKx'):
+            mc.sliderKx.setValue(self.DEFAULT_VALUES['kx'])
+        if hasattr(mc, 'sliderKy'):
+            mc.sliderKy.setValue(self.DEFAULT_VALUES['ky'])
         self._on_edge_type_changed()
 
     def _connect_signals(self):
-        # ربط كل radio buttons الخاصة بأنواع الحواف بالوظيفة _on_edge_type_changed
-        for rb in ['radioCanny', 'radioSobel', 'radioPrewitt', 'radioRoberts']:
-            getattr(self.main_controller, rb).toggled.connect(self._on_edge_type_changed)
-        # ربط زرار Apply لتطبيق الكشف عن الحواف
-        self.main_controller.btnApplyEdgeDetection.clicked.connect(self._apply_edge_detection)
+        mc = self.main_controller
+        # Radio buttons
+        for rb_name in ['radioCanny', 'radioSobel', 'radioPrewitt', 'radioRoberts']:
+            getattr(mc, rb_name).toggled.connect(self._on_edge_type_changed)
         
-        # ربط السلايدرز لتحديث قيمها في الـ labels
-        self.main_controller.sliderEdgeKernelSize.valueChanged.connect(self._update_edge_kernel_label)
-        self.main_controller.sliderEdgeThreshold.valueChanged.connect(self._update_threshold_label)
-        self.main_controller.sliderWeight.valueChanged.connect(self._update_weight_label)
-        self.main_controller.sliderKx.valueChanged.connect(self._update_kx_label)
-        self.main_controller.sliderKy.valueChanged.connect(self._update_ky_label)
-
-    def _update_edge_kernel_label(self, value):
-        """تحديث label الخاص بـ Edge Kernel Size"""
-        # التأكد من أن القيمة فردية (odd)
+        # Apply button
+        mc.btnApplyEdgeDetection.clicked.connect(self._apply_edge_detection)
+        
+        # Sliders - using lambda for cleaner code
+        mc.sliderEdgeKernelSize.valueChanged.connect(lambda v: self._update_kernel_label(v))
+        mc.sliderEdgeThreshold.valueChanged.connect(lambda v: mc.labelEdgeThreshold.setText(f"Threshold: {v}"))
+        mc.sliderWeight.valueChanged.connect(lambda v: mc.labelWeight.setText(f"Weight: {v/10:.1f}"))
+        mc.sliderKx.valueChanged.connect(lambda v: mc.labelKx.setText(f"Kx Scale: {v/10:.1f}"))
+        mc.sliderKy.valueChanged.connect(lambda v: mc.labelKy.setText(f"Ky Scale: {v/10:.1f}"))
+    
+    def _update_kernel_label(self, value):
+        """Update label for Edge Kernel Size ensuring odd value"""
         if value % 2 == 0:
             value += 1
             self.main_controller.sliderEdgeKernelSize.setValue(value)
         self.main_controller.labelEdgeKernel.setText(f"Edge Kernel Size: {value}")
     
-    def _update_threshold_label(self, value):
-        """تحديث label الخاص بـ Threshold"""
-        self.main_controller.labelEdgeThreshold.setText(f"Threshold: {value}")
+    def reset_edge_controls(self):
+        """Reset all edge detection controls to initial state"""
+        mc = self.main_controller
+        
+        # Uncheck all radio buttons
+        mc.uncheck_radio_buttons(mc.radioCanny, mc.radioSobel, mc.radioPrewitt, mc.radioRoberts)
+        
+        # Reset to default values (reuse initialization)
+        self._initialize_controls()
     
-    def _update_weight_label(self, value):
-        """تحديث label الخاص بـ Weight"""
-        self.main_controller.labelWeight.setText(f"Weight: {value/10:.1f}")
-    
-    def _update_kx_label(self, value):
-        """تحديث label الخاص بـ Kx Scale"""
-        self.main_controller.labelKx.setText(f"Kx Scale: {value/10:.1f}")
-    
-    def _update_ky_label(self, value):
-        """تحديث label الخاص بـ Ky Scale"""
-        self.main_controller.labelKy.setText(f"Ky Scale: {value/10:.1f}")
-
     def _on_edge_type_changed(self):
-        """
-        تحديث ظهور السلايدرز بناءً على نوع الحواف المختار.
-        - Threshold يظهر فقط لو اخترنا Canny
-        - Edge Kernel Size يظهر فقط لو اخترنا Sobel أو Prewitt
-        - Weight, Kx, Ky يظلوا ظاهرين دائمًا لأي نوع edge
-        """
+        """Update slider visibility based on selected edge type"""
         is_canny = self.main_controller.radioCanny.isChecked()
         is_roberts = self.main_controller.radioRoberts.isChecked()
         is_sobel = self.main_controller.radioSobel.isChecked()
@@ -76,40 +91,51 @@ class EdgeController:
         """
         تطبيق الكشف عن الحواف على الصورة الحالية بناءً على الاختيارات في الـ UI
         """
-        if not self.main_controller.image_loader.has_image():
-            self.main_controller.show_message(self.main_controller, 'warning', "No Image", "Upload image first")
+        mc = self.main_controller
+        
+        if not mc.validate_image_loaded():
             return
 
-        img = self.main_controller.image_loader.get_original_image()
+        # Check if an edge detection type is selected
+        if not (mc.radioCanny.isChecked() or 
+                mc.radioSobel.isChecked() or 
+                mc.radioPrewitt.isChecked() or 
+                mc.radioRoberts.isChecked()):
+            mc.show_warning("Please select an edge detection type first", "No Selection")
+            return
+
+        img = mc.image_loader.get_original_image()
         blur_sigma = 1.0
         # قراءة قيم Weight و Kx و Ky
-        weight = self.main_controller.sliderWeight.value() / 10
-        kx = self.main_controller.sliderKx.value() / 10
-        ky = self.main_controller.sliderKy.value() / 10
+        weight = mc.sliderWeight.value() / 10
+        kx = mc.sliderKx.value() / 10
+        ky = mc.sliderKy.value() / 10
 
         # قراءة Kernel Size الخاص بالـ edge operator (Sobel / Prewitt)
-        edge_kernel_size = self.main_controller.sliderEdgeKernelSize.value()
+        edge_kernel_size = mc.sliderEdgeKernelSize.value()
         if edge_kernel_size % 2 == 0:
             edge_kernel_size += 1  # تأكد إنه عدد فردي
 
         # تحديد نوع الحواف المطبق
-        if self.main_controller.radioCanny.isChecked():
-            threshold = self.main_controller.sliderEdgeThreshold.value()
+        if mc.radioCanny.isChecked():
+            threshold = mc.sliderEdgeThreshold.value()
             result = self.edge_service.apply_canny(img, threshold, blur_size=5, blur_sigma=blur_sigma,
                                                    weight=weight, kx=kx, ky=ky)
-        elif self.main_controller.radioSobel.isChecked():
+        elif mc.radioSobel.isChecked():
             result = self.edge_service.apply_sobel(img, kernel_size=edge_kernel_size, blur_sigma=blur_sigma,
                                                    weight=weight, kx=kx, ky=ky)
-        elif self.main_controller.radioPrewitt.isChecked():
+        elif mc.radioPrewitt.isChecked():
             result = self.edge_service.apply_prewitt(img, kernel_size=edge_kernel_size, blur_sigma=blur_sigma,
                                                      weight=weight, kx=kx, ky=ky)
-        else:
+        elif mc.radioRoberts.isChecked():
             result = self.edge_service.apply_roberts(img, blur_sigma=blur_sigma, weight=weight, kx=kx, ky=ky)
-
-        if result is None:
-            self.main_controller.show_message(self.main_controller, 'error', "Error", "Edge failed")
+        else:
             return
 
-        self.main_controller.image_loader.update_current_image(result)
-        self.main_controller._display_output_image(result)
-        self.main_controller._update_undo_button_state()
+        if result is None:
+            mc.show_error("Edge detection failed")
+            return
+
+        mc.image_loader.update_current_image(result)
+        mc._display_output_image(result)
+        mc._update_undo_button_state()

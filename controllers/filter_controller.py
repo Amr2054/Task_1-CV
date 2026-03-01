@@ -1,7 +1,6 @@
 """
 Filter controller for managing filter-related UI interactions
 """
-from PyQt5.QtWidgets import QMessageBox
 from services.filter_service import FilterService
 
 
@@ -10,101 +9,79 @@ class FilterController:
     Controller for managing filter controls and applying filters to images
     """
     
+    # Default values
+    DEFAULT_SIGMA = 10  # Slider value (1.0 actual)
+    
     def __init__(self, main_controller):
-        """
-        Initialize filter controller
-        
-        Args:
-            main_controller: Reference to the main controller
-        """
         self.main_controller = main_controller
         self.filter_service = FilterService()
-        
-        # Connect signals
         self._connect_signals()
+        self._initialize_controls()
+    
+    def _initialize_controls(self):
+        """Initialize all controls to default state"""
+        mc = self.main_controller
+        mc.sliderSigma.setValue(self.DEFAULT_SIGMA)
+        mc.sigmaContainer.setVisible(False)
+        mc.comboKernelSize.setCurrentIndex(0)
+        mc.comboFilterApplyOn.setCurrentIndex(0)
     
     def _connect_signals(self):
         """Connect filter-related signals to slots"""
-        # Apply button
-        self.main_controller.btnApplyFilter.clicked.connect(self._apply_filter)
+        mc = self.main_controller
+        mc.btnApplyFilter.clicked.connect(self._apply_filter)
+        mc.sliderSigma.valueChanged.connect(lambda v: mc.labelSigmaValue.setText(f"{v/10:.1f}"))
+        mc.radioGaussianFilter.toggled.connect(lambda checked: mc.sigmaContainer.setVisible(checked))
+        mc.sliderSigma.valueChanged.emit(mc.sliderSigma.value())  # Initialize label
+    
+    def reset_filter_controls(self):
+        """Reset all filter controls to initial state"""
+        mc = self.main_controller
+        
+        # Uncheck all radio buttons
+        mc.uncheck_radio_buttons(mc.radioAverage, mc.radioGaussianFilter, mc.radioMedian)
+        
+        # Reset to default values (reuse initialization)
+        self._initialize_controls()
     
     def _apply_filter(self):
-        """
-        Apply the selected filter type to either original or current image based on combo box selection
-        """
-        # Check if image is loaded
-        if not self.main_controller.image_loader.has_image():
-            self.main_controller.show_message(
-                self.main_controller,
-                'warning',
-                "No Image",
-                "Please upload an image first."
-            )
+        """Apply the selected filter type to either original or current image"""
+        mc = self.main_controller
+        
+        if not mc.validate_image_loaded():
             return
         
-        # Get image based on combo box selection
-        # Index 0 = Current Image (with Noise), Index 1 = Original Image
-        apply_on_index = self.main_controller.comboFilterApplyOn.currentIndex()
-        
+        # Get image based on selection
+        apply_on_index = mc.comboFilterApplyOn.currentIndex()
         if apply_on_index == 0:
-            # Check if current image has been modified (noise applied)
-            if not self.main_controller.image_loader.is_image_modified():
-                self.main_controller.show_message(
-                    self.main_controller,
-                    'warning',
-                    "No Current Image",
-                    "There is no current image with noise applied yet.",
-                    # "Please choose one of the following options:<br><br>"
-                    # "<b>1.</b> Apply noise first to create a current image<br>"
-                    # "<b>2.</b> Select 'Original Image' from the dropdown and apply the filter"
-                )
+            if not mc.image_loader.is_image_modified():
+                mc.show_warning("There is no current image with noise applied yet.", "No Current Image")
                 return
-            else:
-                # Apply on current image (which has noise)
-                image = self.main_controller.image_loader.get_current_image()
+            image = mc.image_loader.get_current_image()
         else:
-            # Apply on original image
-            image = self.main_controller.image_loader.get_original_image()
+            image = mc.image_loader.get_original_image()
         
-        # Get kernel size from combo box
-        # Index 0 = 3×3, Index 1 = 5×5, Index 2 = 7×7, Index 3 = 9×9, Index 4 = 11×11, Index 5 = 13×13, Index 6 = 15×15
-        kernel_index = self.main_controller.comboKernelSize.currentIndex()
+        # Get kernel size
         kernel_sizes = [3, 5, 7, 9, 11, 13, 15]
-        kernel_size = kernel_sizes[kernel_index] if kernel_index < len(kernel_sizes) else 3
+        kernel_size = kernel_sizes[mc.comboKernelSize.currentIndex()]
         
-        # Determine which filter type is selected and apply
-        if self.main_controller.radioAverage.isChecked():
+        # Apply selected filter
+        if mc.radioAverage.isChecked():
             result = self.filter_service.apply_average_filter(image, kernel_size)
-        
-        elif self.main_controller.radioGaussianFilter.isChecked():
-            # Use sigma=1 as default for manual implementation
-            result = self.filter_service.apply_gaussian_filter(image, kernel_size, sigma=1)
-        
-        elif self.main_controller.radioMedian.isChecked():
+        elif mc.radioGaussianFilter.isChecked():
+            sigma = mc.sliderSigma.value() / 10.0
+            result = self.filter_service.apply_gaussian_filter(image, kernel_size, sigma=sigma)
+        elif mc.radioMedian.isChecked():
             result = self.filter_service.apply_median_filter(image, kernel_size)
-        
         else:
-            self.main_controller.show_message(
-                self.main_controller,
-                'warning',
-                "No Selection",
-                "Please select a filter type."
-            )
+            mc.show_warning("Please select a filter type.", "No Selection")
             return
         
-        # Check if processing was successful
         if result is None:
-            self.main_controller.show_message(
-                self.main_controller,
-                'error',
-                "Error",
-                "Failed to apply filter."
-            )
+            mc.show_error("Failed to apply filter.")
             return
         
-        # Update current image and display
-        self.main_controller.image_loader.update_current_image(result)
-        self.main_controller._display_output_image(result)
-        
-        # Update undo button state
-        self.main_controller._update_undo_button_state()
+        # Update and display
+        mc.image_loader.update_current_image(result)
+        mc._display_output_image(result)
+        mc._update_undo_button_state()

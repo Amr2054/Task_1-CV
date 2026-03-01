@@ -11,16 +11,7 @@ class NoiseService:
     
     @staticmethod
     def apply_uniform_noise(image, intensity=30):
-        """
-        Apply uniform noise to an image
-        
-        Args:
-            image: Input image (numpy array, grayscale or color)
-            intensity: Noise range (0-100), controls low=-intensity, high=+intensity
-            
-        Returns:
-            Image with uniform noise applied
-        """
+
         if not validate_image(image):
             return None
         
@@ -40,16 +31,7 @@ class NoiseService:
     
     @staticmethod
     def apply_salt_pepper_noise(image, amount=5):
-        """
-        Apply salt and pepper noise to an image
-        
-        Args:
-            image: Input image (numpy array, grayscale or color)
-            amount: Percentage of pixels to affect (0-100), half salt, half pepper
-            
-        Returns:
-            Image with salt and pepper noise applied
-        """
+     
         if not validate_image(image):
             return None
         
@@ -83,17 +65,7 @@ class NoiseService:
     
     @staticmethod
     def apply_gaussian_noise(image, mean=0, sigma=10):
-        """
-        Apply Gaussian noise to an image
-        
-        Args:
-            image: Input image (numpy array, grayscale or color)
-            mean: Mean of the Gaussian distribution (default 0)
-            sigma: Standard deviation (0-100), controls noise strength
-            
-        Returns:
-            Image with Gaussian noise applied
-        """
+
         if not validate_image(image):
             return None
         

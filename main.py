@@ -31,11 +31,11 @@ def main():
     # Create main window controller
     main_window = MainController()
     
-    # Initialize sub-controllers
-    noise_controller = NoiseController(main_window)
-    filter_controller = FilterController(main_window)
-    edge_controller = EdgeController(main_window)
-    frequency_controller = FrequencyController(main_window)
+    # Initialize sub-controllers and store them in main_window
+    main_window.noise_controller = NoiseController(main_window)
+    main_window.filter_controller = FilterController(main_window)
+    main_window.edge_controller = EdgeController(main_window)
+    main_window.frequency_controller = FrequencyController(main_window)
 
     # Show the main window
     main_window.show()

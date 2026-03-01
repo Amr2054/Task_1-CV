@@ -1,6 +1,7 @@
 """
 Histogram controller for managing histogram equalization and distribution
 """
+import cv2
 from PyQt5.QtWidgets import QMessageBox
 from services.curves_service import (
     compute_histogram_stats, 
@@ -9,6 +10,7 @@ from services.curves_service import (
     get_distribution_as_image,
     to_grayscale
 )
+from utils.image_utils import qpixmap_to_cv, cv_to_qpixmap
 
 
 class HistogramController:
@@ -24,232 +26,161 @@ class HistogramController:
             main_controller: Reference to the main controller
         """
         self.main_controller = main_controller
-        self.equalized_image = None  # Cache for equalized image
-        
-        # Connect signals
+        self.equalized_image = None
+        self.grayscale_image = None
         self._connect_signals()
+        self._initialize_controls()
+    
+    def _initialize_controls(self):
+        """Initialize all controls to default state"""
+        if hasattr(self.main_controller, 'comboHistChannel'):
+            self.main_controller.comboHistChannel.setCurrentIndex(0)
     
     def _connect_signals(self):
         """Connect histogram-related signals to slots"""
-        # Show Histogram button
-        if hasattr(self.main_controller, 'btnShowHist'):
-            self.main_controller.btnShowHist.clicked.connect(self._show_histogram)
+        mc = self.main_controller
+        if hasattr(mc, 'btnShowHist'):
+            mc.btnShowHist.clicked.connect(self._show_histogram)
+        if hasattr(mc, 'btnShowDistribution'):
+            mc.btnShowDistribution.clicked.connect(self._show_distribution_curve)
+        if hasattr(mc, 'btnEqualize'):
+            mc.btnEqualize.clicked.connect(self._apply_histogram_equalization)
+        if hasattr(mc, 'btnNormalize'):
+            mc.btnNormalize.clicked.connect(self._apply_normalize)
+        if hasattr(mc, 'btnGrayscale'):
+            mc.btnGrayscale.clicked.connect(self._apply_grayscale)
+    
+    def reset_histogram_controls(self):
+        """Reset all histogram controls to initial state"""
+        self.equalized_image = None
+        self.grayscale_image = None
+        # Reset to default values (reuse initialization)
+        self._initialize_controls()
+    
+    def _get_selected_image(self, combo_attr='comboHistChannel', default_title="Image"):
+        """
+        Get the selected image based on combo box selection
         
-        # Show Distribution Curve button
-        if hasattr(self.main_controller, 'btnShowDistribution'):
-            self.main_controller.btnShowDistribution.clicked.connect(self._show_distribution_curve)
+        Returns:
+            tuple: (cv_image, title) or (None, None) if error
+        """
+        combo = getattr(self.main_controller, combo_attr, None)
+        if not combo:
+            return None, None
         
-        # Equalize button
-        if hasattr(self.main_controller, 'btnEqualize'):
-            self.main_controller.btnEqualize.clicked.connect(self._apply_histogram_equalization)
+        selected = combo.currentText()
         
-        # Normalize button
-        if hasattr(self.main_controller, 'btnNormalize'):
-            self.main_controller.btnNormalize.clicked.connect(self._apply_normalize)
-
-        # Grayscale button
-        if hasattr(self.main_controller, 'btnGrayscale'):
-            self.main_controller.btnGrayscale.clicked.connect(self._apply_grayscale)
+        if selected == "Equalized Image":
+            if self.equalized_image is None:
+                self.main_controller.show_error("Please apply equalization first")
+                return None, None
+            return self.equalized_image.copy(), f"{default_title} (Equalized)"
+        
+        elif selected == "Grayscale Image":
+            if self.grayscale_image is None:
+                self.main_controller.show_error("Please apply grayscale first")
+                return None, None
+            return self.grayscale_image.copy(), f"{default_title} (Grayscale)"
+        
+        else:  # Original image
+            cv_image = qpixmap_to_cv(self.main_controller.original_pixmap)
+            return cv_image, f"{default_title} (Original)"
+    
+    def _display_result(self, cv_image):
+        """Display result image in output"""
+        self.main_controller.output_pixmap = cv_to_qpixmap(cv_image)
+        self.main_controller._display_output_image(cv_image)
 
     def _show_histogram(self):
         """Show histogram distribution"""
-        if self.main_controller.original_pixmap is None:
-            self.main_controller.show_message(self.main_controller, 'warning', "Error", "Please load an image first")
+        if not self.main_controller.validate_image_loaded():
             return
         
         try:
-            from utils.image_utils import qpixmap_to_cv, cv_to_qpixmap
-            
-            # Get selected image type from combo box
-            combo = self.main_controller.comboHistChannel if hasattr(self.main_controller, 'comboHistChannel') else None
-            if combo is None:
-                self.main_controller.show_message(self.main_controller, 'warning', "Error", "Histogram selector not found")
+            cv_image, title = self._get_selected_image('comboHistChannel', 'Histogram')
+            if cv_image is None:
                 return
-                
-            selected_type = combo.currentText()
             
-            if selected_type == "Equalized Image":
-                # Use equalized image if available
-                if self.equalized_image is None:
-                    self.main_controller.show_message(self.main_controller, 'warning', "Error",
-                                                      "Please apply equalization first")
-                    return
-                cv_image = self.equalized_image.copy()
-                title = "Histogram (Equalized)"
-            elif selected_type == "Grayscale Image":
-                # Use grayscale image if available
-                if getattr(self, 'grayscale_image', None) is None:
-                    self.main_controller.show_message(self.main_controller, 'warning', "Error",
-                                                      "Please apply grayscale first")
-                    return
-                cv_image = self.grayscale_image.copy()
-                title = "Histogram (Grayscale)"
-            else:
-                # Use original image
-                cv_image = qpixmap_to_cv(self.main_controller.original_pixmap)
-                title = "Image Histogram (Original)"
-
-            # Get histogram as image
             hist_image = get_distribution_as_image(cv_image, mode="hist", title=title)
-            
-            # Display in output
-            self.main_controller.output_pixmap = cv_to_qpixmap(hist_image)
-            self.main_controller._display_output_image(hist_image)
+            self._display_result(hist_image)
             
         except Exception as e:
-            self.main_controller.show_message(self.main_controller, 'error', "Error", f"Failed to show histogram: {str(e)}")
+            self.main_controller.show_error(f"Failed to show histogram: {str(e)}")
     
     def _show_distribution_curve(self):
         """Show distribution curve (PDF or CDF)"""
-        if self.main_controller.original_pixmap is None:
-            self.main_controller.show_message(self.main_controller, 'warning', "Error", "Please load an image first")
+        if not self.main_controller.validate_image_loaded():
             return
         
         try:
-            from utils.image_utils import qpixmap_to_cv, cv_to_qpixmap
+            combo_attr = 'comboCurveChannel' if hasattr(self.main_controller, 'comboCurveChannel') else 'comboHistChannel'
+            cv_image, title = self._get_selected_image(combo_attr, 'Distribution Curve')
+            if cv_image is None:
+                return
             
-            # Get selected image type from combo box (use comboCurveChannel for distribution curve)
-            combo = self.main_controller.comboCurveChannel if hasattr(self.main_controller, 'comboCurveChannel') else self.main_controller.comboHistChannel
-            selected_type = combo.currentText()
+            # Get curve type (PDF or CDF)
+            curve_combo = getattr(self.main_controller, 'comboCurveType', None)
+            if curve_combo:
+                mode = "pdf" if curve_combo.currentText().upper() == "PDF" else "cdf"
+            else:
+                mode = "cdf"
             
-            if selected_type == "Equalized Image":
-                # Use equalized image if available
-                if self.equalized_image is None:
-                    self.main_controller.show_message(self.main_controller, 'warning', "Error",
-                                                      "Please apply equalization first")
-                    return
-                cv_image = self.equalized_image.copy()
-                title = "Distribution Curve (Equalized)"
-            elif selected_type == "Grayscale Image":
-                # Use grayscale image if available
-                if getattr(self, 'grayscale_image', None) is None:
-                    self.main_controller.show_message(self.main_controller, 'warning', "Error",
-                                                      "Please apply grayscale first")
-                    return
-                cv_image = self.grayscale_image.copy()
-                title = "Distribution Curve (Grayscale)"
-            else:
-                # Use original image
-                cv_image = qpixmap_to_cv(self.main_controller.original_pixmap)
-                title = "Distribution Curve (Original)"
-
-            # Get selected curve type (PDF or CDF) from combo box
-            curve_type_combo = self.main_controller.comboCurveType if hasattr(self.main_controller, 'comboCurveType') else None
-            if curve_type_combo is None:
-                mode = "cdf"  # Default to CDF if combo box not found
-            else:
-                selected_curve_type = curve_type_combo.currentText().upper()
-                mode = "pdf" if selected_curve_type == "PDF" else "cdf"
-
-            # Add mode info to title
             title = f"{title} ({mode.upper()})"
-
-            # Get distribution curve as image
             dist_image = get_distribution_as_image(cv_image, mode=mode, title=title)
-
-            # Display in output
-            self.main_controller.output_pixmap = cv_to_qpixmap(dist_image)
-            self.main_controller._display_output_image(dist_image)
-
+            self._display_result(dist_image)
+            
         except Exception as e:
-            self.main_controller.show_message(self.main_controller, 'error', "Error", f"Failed to show distribution curve: {str(e)}")
+            self.main_controller.show_error(f"Failed to show distribution curve: {str(e)}")
 
     def _apply_histogram_equalization(self):
         """Apply histogram equalization to the current image"""
-        if self.main_controller.original_pixmap is None:
-            self.main_controller.show_message(self.main_controller, 'warning', "Error", "Please load an image first")
+        if not self.main_controller.validate_image_loaded():
             return
 
         try:
-            from utils.image_utils import qpixmap_to_cv, cv_to_qpixmap
-
-            # Convert QPixmap to OpenCV format
             cv_image = qpixmap_to_cv(self.main_controller.original_pixmap)
-
-            # Apply histogram equalization
             equalized = histogram_equalization(cv_image)
-
-            # Cache the equalized image
+            
             self.equalized_image = equalized.copy()
-
-            # Update current image for undo support
             self.main_controller.image_loader.update_current_image(equalized)
-
-            # Update the display
-            self.main_controller.output_pixmap = cv_to_qpixmap(equalized)
-            self.main_controller._display_output_image(equalized)
-
-            # Update undo button state
+            self._display_result(equalized)
             self.main_controller._update_undo_button_state()
 
-            self.main_controller.show_message(self.main_controller, 'success', "Success", "Histogram equalization applied")
-
         except Exception as e:
-            self.main_controller.show_message(self.main_controller, 'error', "Error", f"Failed to apply equalization: {str(e)}")
+            self.main_controller.show_error(f"Failed to apply equalization: {str(e)}")
 
     def _apply_normalize(self):
         """Apply normalization to the current image"""
-        if self.main_controller.original_pixmap is None:
-            self.main_controller.show_message(self.main_controller, 'warning', "Error", "Please load an image first")
+        if not self.main_controller.validate_image_loaded():
             return
 
         try:
-            import cv2
-            from utils.image_utils import qpixmap_to_cv, cv_to_qpixmap
-
-            # Convert QPixmap to OpenCV format
             cv_image = qpixmap_to_cv(self.main_controller.original_pixmap)
-
-            # Normalize image (0-255 range)
             normalized = cv2.normalize(cv_image, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
-
-            # Update current image for undo support
+            
             self.main_controller.image_loader.update_current_image(normalized)
-
-            # Update the display
-            self.main_controller.output_pixmap = cv_to_qpixmap(normalized)
-            self.main_controller._display_output_image(normalized)
-
-            # Update undo button state
+            self._display_result(normalized)
             self.main_controller._update_undo_button_state()
 
-            self.main_controller.show_message(self.main_controller, 'success', "Success", "Normalization applied")
-
         except Exception as e:
-            self.main_controller.show_message(self.main_controller, 'error', "Error", f"Failed to apply normalization: {str(e)}")
+            self.main_controller.show_error(f"Failed to apply normalization: {str(e)}")
 
     def _apply_grayscale(self):
         """Convert current image to grayscale"""
-        if self.main_controller.original_pixmap is None:
-            self.main_controller.show_message(self.main_controller, 'warning', "Error", "Please load an image first")
+        if not self.main_controller.validate_image_loaded():
             return
 
         try:
-            from utils.image_utils import qpixmap_to_cv, cv_to_qpixmap
-
-            # Convert QPixmap to OpenCV format
             cv_image = qpixmap_to_cv(self.main_controller.original_pixmap)
-
-            # Apply grayscale conversion
             gray_image = to_grayscale(cv_image)
-
-            # Cache the grayscale image
+            
             self.grayscale_image = gray_image.copy()
-
-            # Update current image for undo support
             self.main_controller.image_loader.update_current_image(gray_image)
-
-            # Update the display
-            self.main_controller.output_pixmap = cv_to_qpixmap(gray_image)
-            self.main_controller._display_output_image(gray_image)
-
-            # Update undo button state
+            self._display_result(gray_image)
             self.main_controller._update_undo_button_state()
 
-            self.main_controller.show_message(self.main_controller, 'success', "Success", "Converted to grayscale")
-
         except Exception as e:
-            self.main_controller.show_message(self.main_controller, 'error', "Error", f"Failed to convert to grayscale: {str(e)}")
+            self.main_controller.show_error(f"Failed to convert to grayscale: {str(e)}")
 
     def compute_stats(self, img):
         """

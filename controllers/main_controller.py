@@ -32,6 +32,10 @@ class MainController(QMainWindow):
         self.original_pixmap = None
         self.output_pixmap = None
         
+        # Separate history for each mode (0: Noise, 1: Filter, 2: Edge, 3: Frequency, 4: Histogram)
+        self.mode_history = {0: [], 1: [], 2: [], 3: [], 4: []}
+        self.current_mode = 0  # Track current mode
+        
         # Initialize controllers
         self.histogram_controller = HistogramController(self)
         
@@ -89,6 +93,47 @@ class MainController(QMainWindow):
         """)
         msg_box.exec_()
     
+    # ============== Shared Helper Methods ==============
+    
+    def validate_image_loaded(self, show_error=True):
+        """
+        Check if an image is loaded
+        
+        Args:
+            show_error: Whether to show error message if no image
+            
+        Returns:
+            bool: True if image is loaded, False otherwise
+        """
+        has_image = self.image_loader.has_image()
+        if not has_image and show_error:
+            self.show_warning("Please upload an image first.", "No Image")
+        return has_image
+    
+    def uncheck_radio_buttons(self, *radio_buttons):
+        """
+        Helper to safely uncheck radio buttons without triggering signals
+        
+        Args:
+            *radio_buttons: Variable number of QRadioButton objects to uncheck
+        """
+        for rb in radio_buttons:
+            rb.blockSignals(True)
+            rb.setAutoExclusive(False)
+            rb.setChecked(False)
+            rb.setAutoExclusive(True)
+            rb.blockSignals(False)
+    
+    def show_error(self, message, title="Error"):
+        """Show error message dialog"""
+        self.show_message(self, 'error', title, message)
+    
+    def show_warning(self, message, title="Warning"):
+        """Show warning message dialog"""
+        self.show_message(self, 'warning', title, message)
+    
+    # ============== Signal Connections ==========================
+    
     def _connect_main_signals(self):
         """Connect main window signals to slots"""
         # Top bar buttons
@@ -96,6 +141,7 @@ class MainController(QMainWindow):
         self.btnUndo.clicked.connect(self._undo_last_operation)
         self.btnUndoAll.clicked.connect(self._undo_all_operations)
         self.btnReset.clicked.connect(self._reset_view)
+        self.btnSave.clicked.connect(self._save_output_image)
         
         # Mode selector
         self.modeCombo.currentIndexChanged.connect(self._on_mode_changed)
@@ -123,6 +169,9 @@ class MainController(QMainWindow):
         if not success:
             self.show_message(self, 'error', "Error", error_msg)
             return
+        
+        # Clear history for current mode when loading new image
+        self.mode_history[self.current_mode] = []
         
         # Display the loaded image
         self._display_original_image(image)
@@ -175,7 +224,7 @@ class MainController(QMainWindow):
     
     def _undo_last_operation(self):
         """
-        Undo the last operation (noise or filter)
+        Undo the last operation (noise, filter, edge, or frequency)
         """
         if not self.image_loader.can_undo():
             self.show_message(self, 'info', "No History", "There are no operations to undo.")
@@ -185,8 +234,17 @@ class MainController(QMainWindow):
         previous_image = self.image_loader.undo()
         
         if previous_image is not None:
-            # Display the previous state
-            self._display_output_image(previous_image)
+            # Check if we're in frequency mode
+            if self.current_mode == 3:  # Frequency mode
+                # Display in frequency hybrid label
+                from utils.image_utils import cv_to_qpixmap, scale_pixmap
+                pixmap = cv_to_qpixmap(previous_image)
+                scaled = scale_pixmap(pixmap, self.imgFreqHybrid.width() - 10, self.imgFreqHybrid.height() - 10)
+                self.imgFreqHybrid.setPixmap(scaled)
+            else:
+                # Display in output image for other modes
+                self._display_output_image(previous_image)
+            
             self._update_undo_button_state()
         else:
             self.show_message(self, 'warning', "Undo Failed", "Failed to undo the last operation.")
@@ -198,6 +256,31 @@ class MainController(QMainWindow):
         has_history = self.image_loader.can_undo()
         self.btnUndo.setEnabled(has_history)
         self.btnUndoAll.setEnabled(has_history)
+    
+    def _reset_all_controls(self):
+        """
+        Reset all UI controls in all modes to their initial state
+        This is a centralized function to avoid code duplication
+        """
+        # Reset Noise controls
+        if hasattr(self, 'noise_controller'):
+            self.noise_controller.reset_noise_controls()
+        
+        # Reset Filter controls
+        if hasattr(self, 'filter_controller'):
+            self.filter_controller.reset_filter_controls()
+        
+        # Reset Edge Detection controls
+        if hasattr(self, 'edge_controller'):
+            self.edge_controller.reset_edge_controls()
+        
+        # Reset Frequency Domain controls
+        if hasattr(self, 'frequency_controller'):
+            self.frequency_controller.reset_frequency_controls()
+        
+        # Reset Histogram/Curves controls
+        if hasattr(self, 'histogram_controller'):
+            self.histogram_controller.reset_histogram_controls()
     
     def _set_scaled_pixmap(self, label, pixmap):
         """
@@ -216,7 +299,19 @@ class MainController(QMainWindow):
     def _undo_all_operations(self):
         """
         مسح كل الـ operations والرجوع للصورة الأصلية (مع إبقاء الـ original موجودة)
+        Only reverts the image without changing any UI controls
         """
+        # Check if in frequency mode (mode 3)
+        if self.current_mode == 3:
+            # In frequency mode, just clear the hybrid image
+            self.imgFreqHybrid.clear()
+            self.imgFreqHybrid.setText("Hybrid image will appear here")
+            # Clear history for frequency mode
+            self.mode_history[self.current_mode] = []
+            self.image_loader.history = []
+            self._update_undo_button_state()
+            return
+        
         if not self.image_loader.has_image():
             self.show_message(self, 'info', "No Image", "No image loaded.")
             return
@@ -226,19 +321,66 @@ class MainController(QMainWindow):
         self.imgOutput.setText("Processed image will appear here")
         self.output_pixmap = None
         
-        # Clear frequency mode images (except original)
-        self.imgFreqHybrid.clear()
-        self.imgFreqHybrid.setText("Hybrid image will appear here")
-        
         # Reset to original image
         self.image_loader.reset_to_original()
         
-        # Reset histogram controller cached image
-        if hasattr(self, 'histogram_controller'):
-            self.histogram_controller.equalized_image = None
+        # Clear history for current mode
+        self.mode_history[self.current_mode] = []
         
         # Update undo button state
         self._update_undo_button_state()
+    
+    def _save_output_image(self):
+        """Save the output image to a file"""
+        # Check if in frequency mode
+        if self.current_mode == 3:
+            # Check if hybrid image exists
+            if not hasattr(self.imgFreqHybrid, 'pixmap') or self.imgFreqHybrid.pixmap() is None or self.imgFreqHybrid.pixmap().isNull():
+                self.show_warning("No output image to save. Please generate a hybrid image first.", "No Output")
+                return
+        else:
+            # Check if output image exists
+            if self.output_pixmap is None or self.output_pixmap.isNull():
+                self.show_warning("No output image to save. Please process an image first.", "No Output")
+                return
+        
+        # Open save file dialog
+        file_path, selected_filter = QFileDialog.getSaveFileName(
+            self,
+            "Save Output Image",
+            "",
+            "PNG Image (*.png);;JPEG Image (*.jpg *.jpeg);;BMP Image (*.bmp);;TIFF Image (*.tiff);;All Files (*.*)"
+        )
+        
+        if not file_path:
+            return
+        
+        try:
+            # Get the image to save
+            if self.current_mode == 3:  # Frequency mode
+                # Get current image from image_loader (last hybrid generated)
+                if self.image_loader.can_undo() or self.image_loader.current_image is not None:
+                    import cv2
+                    cv2.imwrite(file_path, self.image_loader.current_image)
+                else:
+                    self.show_warning("No hybrid image to save.", "No Output")
+                    return
+            else:
+                # Get current image from image_loader
+                if self.image_loader.current_image is not None:
+                    import cv2
+                    cv2.imwrite(file_path, self.image_loader.current_image)
+                else:
+                    self.show_warning("No processed image to save.", "No Output")
+                    return
+            
+            # Success message - show filename only
+            from pathlib import Path
+            filename = Path(file_path).name
+            self.show_message(self, 'info', "Success", f"Image saved successfully as {filename}")
+            
+        except Exception as e:
+            self.show_error(f"Failed to save image: {str(e)}")
     
     # def _on_mode_changed(self, index):
     #     self.settingsStack.setCurrentIndex(index)
@@ -265,6 +407,16 @@ class MainController(QMainWindow):
     #     self._update_undo_button_state()
     
     def _on_mode_changed(self, index):
+        # Save current mode's history before switching
+        if hasattr(self, 'current_mode'):
+            self.mode_history[self.current_mode] = self.image_loader.history.copy()
+        
+        # Update current mode
+        self.current_mode = index
+        
+        # Restore the new mode's history
+        self.image_loader.history = self.mode_history[index].copy()
+        
         is_frequency = (index == 3)
 
         # Update heights BEFORE changing visibility to avoid layout glitch
@@ -288,10 +440,12 @@ class MainController(QMainWindow):
         self.imgOutput.clear()
         self.imgOutput.setText("Processed image will appear here")
         self.output_pixmap = None
-
-        # مسح الـ history عند تغيير الـ mode
-        self.image_loader.history = []
+        
+        # Update undo button state based on new mode's history
         self._update_undo_button_state()
+        
+        # Reset all UI controls when switching modes
+        self._reset_all_controls()
     
     def _reset_view(self):
         """
@@ -315,17 +469,17 @@ class MainController(QMainWindow):
         self.original_pixmap = None
         self.output_pixmap = None
         
-        # Reset histogram controller cached image
-        if hasattr(self, 'histogram_controller'):
-            self.histogram_controller.equalized_image = None
-        
-        # Reset frequency controller images
-        if hasattr(self, 'frequency_controller'):
-            self.frequency_controller._img1 = None
-            self.frequency_controller._img2 = None
+        # Reset all UI controls
+        self._reset_all_controls()
         
         # Reset image loader
         self.image_loader = ImageLoader()
+        
+        # Clear all mode history
+        self.mode_history = {0: [], 1: [], 2: [], 3: [], 4: []}
+        
+        # Update undo button state
+        self._update_undo_button_state()
     
     def resizeEvent(self, event):
         """

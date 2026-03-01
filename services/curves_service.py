@@ -42,7 +42,7 @@ def compute_histogram_stats(img):
             cdf[c] = pdf[c].cumsum()
 
         return hist, pdf, cdf
-    
+
 
 
 def draw_distribution(img, mode="hist", title="", save_path=None):
@@ -104,23 +104,23 @@ def draw_distribution(img, mode="hist", title="", save_path=None):
 def get_distribution_as_image(img, mode="hist", title="", figsize=(8, 4)):
     """
     Convert histogram/distribution to numpy image instead of displaying
-    
+
     Args:
         img: Input image (grayscale or RGB)
         mode: 'hist', 'pdf', or 'cdf'
         title: Title for the plot
         figsize: Figure size (width, height)
-        
+
     Returns:
         numpy array of the plot as an image
     """
     import matplotlib.pyplot as plt
     from io import BytesIO
-    
+
     hist, pdf, cdf = compute_histogram_stats(img)
-    
+
     fig = plt.figure(figsize=figsize)
-    
+
     # ==========================
     # Grayscale
     # ==========================
@@ -134,7 +134,7 @@ def get_distribution_as_image(img, mode="hist", title="", figsize=(8, 4)):
         elif mode == "cdf":
             plt.plot(range(256), cdf, color='blue', linewidth=2)
             plt.ylabel("Cumulative Probability")
-    
+
     # ==========================
     # RGB
     # ==========================
@@ -150,14 +150,14 @@ def get_distribution_as_image(img, mode="hist", title="", figsize=(8, 4)):
             elif mode == "cdf":
                 plt.plot(range(256), cdf[c], color=colors[c], label=colors[c].upper())
                 plt.ylabel("Cumulative Probability")
-        
+
         plt.legend()
-    
+
     plt.title(title)
     plt.xlabel("Pixel Value")
     plt.xlim([0, 255])
     plt.grid(alpha=0.3)
-    
+
     # Convert plot to numpy array
     buf = BytesIO()
     plt.savefig(buf, format='png', bbox_inches='tight', dpi=100)
@@ -176,7 +176,7 @@ def get_distribution_as_image(img, mode="hist", title="", figsize=(8, 4)):
         plot_image = cv2.cvtColor(plot_image, cv2.COLOR_RGBA2BGR)
     else:
         plot_image = cv2.cvtColor(plot_image, cv2.COLOR_RGB2BGR)
-    
+
     return plot_image
 
 
@@ -216,3 +216,26 @@ def histogram_equalization(img, save_name=None):
         np.save(os.path.join("equalized", save_name), result)
 
     return result
+
+
+def to_grayscale(img):
+    """
+    Convert an image to grayscale manually
+    Uses the standard luminosity formula: 0.299*R + 0.587*G + 0.114*B
+    """
+    if img.ndim == 3:
+        import numpy as np
+
+        # Extract B, G, R channels
+        b = img[:, :, 0]
+        g = img[:, :, 1]
+        r = img[:, :, 2]
+
+        # Apply the luminosity formula manually
+        gray = (0.114 * b) + (0.587 * g) + (0.299 * r)
+
+        # Convert the resulting float array back to 8-bit unsigned integers
+        return gray.astype(np.uint8)
+
+    # If the image is already 2D (grayscale), just return a copy
+    return img.copy()

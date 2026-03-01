@@ -1372,6 +1372,11 @@ padding: 20px;</string>
                     <string>Equalized Image</string>
                    </property>
                   </item>
+                <item>
+                  <property name="text">
+                  <string>Grayscale Image</string>
+                 </property>
+                </item>
                  </widget>
                 </item>
                 <item>
@@ -1418,6 +1423,11 @@ padding: 20px;</string>
                     <item>
                      <property name="text">
                       <string>Equalized Image</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>Grayscale Image</string>
                      </property>
                     </item>
                    </widget>
@@ -1480,6 +1490,13 @@ padding: 20px;</string>
                <widget class="QPushButton" name="btnNormalize">
                 <property name="text">
                  <string>Normalize</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="btnGrayscale">
+                <property name="text">
+                 <string>Grayscale</string>
                 </property>
                </widget>
               </item>

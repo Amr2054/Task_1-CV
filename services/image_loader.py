@@ -37,6 +37,12 @@ class ImageLoader:
             if image is None:
                 return False, None, "Failed to load image. Make sure it's a valid image format."
             
+            # Auto-detect: if 3D with identical channels, convert to 2D grayscale
+            if image.ndim == 3 and image.shape[2] == 3:
+                # Check if all channels are the same (true grayscale)
+                if np.allclose(image[:,:,0], image[:,:,1]) and np.allclose(image[:,:,1], image[:,:,2]):
+                    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            
             # Store the loaded image
             self.original_image = image.copy()
             self.current_image = image.copy()

@@ -21,6 +21,7 @@ class NoiseService:
         # Generate uniform noise in range [-intensity, +intensity]
         low = -intensity
         high = intensity
+        # Generate independent noise for each channel (color noise for RGB, grayscale for 2D)
         uni = np.random.uniform(low, high, image.shape)
         noisy += uni
         
@@ -73,6 +74,7 @@ class NoiseService:
         noisy = image.astype(np.float32)
         
         # Generate Gaussian noise with specified mean and sigma
+        # Independent noise for each channel (color noise for RGB, grayscale for 2D)
         gauss = np.random.normal(mean, sigma, image.shape)
         noisy += gauss
         

@@ -10,12 +10,6 @@ from PyQt5.QtCore import Qt
 def cv_to_qpixmap(cv_image):
     """
     Convert OpenCV image (BGR) to QPixmap for display in PyQt5
-    
-    Args:
-        cv_image: OpenCV image in BGR format (numpy array)
-        
-    Returns:
-        QPixmap object ready to display
     """
     if cv_image is None:
         return QPixmap()
@@ -69,14 +63,6 @@ def qpixmap_to_cv(qpixmap):
 def scale_pixmap(pixmap, label_width, label_height):
     """
     Scale pixmap to fit within label dimensions while maintaining aspect ratio
-    
-    Args:
-        pixmap: QPixmap to scale
-        label_width: Maximum width
-        label_height: Maximum height
-        
-    Returns:
-        Scaled QPixmap
     """
     if pixmap.isNull():
         return pixmap
@@ -92,26 +78,12 @@ def scale_pixmap(pixmap, label_width, label_height):
 def validate_image(image):
     """
     Validate that image is a valid numpy array
-    
-    Args:
-        image: Image to validate
-        
-    Returns:
-        bool: True if valid, False otherwise
     """
     return isinstance(image, np.ndarray) and image.size > 0
 
 
 def ensure_uint8(image):
-    """
-    Ensure image is in uint8 format (0-255 range)
-    
-    Args:
-        image: Input image
-        
-    Returns:
-        Image converted to uint8
-    """
+
     if image.dtype != np.uint8:
         # Normalize to 0-255 range
         image = cv2.normalize(image, None, 0, 255, cv2.NORM_MINMAX)

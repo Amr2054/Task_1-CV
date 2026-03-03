@@ -96,15 +96,7 @@ class MainController(QMainWindow):
     # ============== Shared Helper Methods ==============
     
     def validate_image_loaded(self, show_error=True):
-        """
-        Check if an image is loaded
-        
-        Args:
-            show_error: Whether to show error message if no image
-            
-        Returns:
-            bool: True if image is loaded, False otherwise
-        """
+
         has_image = self.image_loader.has_image()
         if not has_image and show_error:
             self.show_warning("Please upload an image first.", "No Image")
@@ -149,7 +141,7 @@ class MainController(QMainWindow):
         # Update undo button state initially
         self._update_undo_button_state()
     
-    def _upload_original_image(self):
+    def _upload_original_image(self):    #1)upload original image
         """
         Open file dialog to select and load an image
         """

@@ -47,8 +47,8 @@ class FilterService:
             return None
 
         ksize = max(3, kernel_size)
-        if ksize % 2 == 0:
-            ksize += 1
+        # if ksize % 2 == 0:
+        #     ksize += 1
 
         kernel = np.ones((ksize, ksize), dtype=np.float32)
         kernel /= (ksize * ksize)
@@ -85,8 +85,8 @@ class FilterService:
             return None
 
         ksize = max(3, kernel_size)
-        if ksize % 2 == 0:
-            ksize += 1
+        # if ksize % 2 == 0:
+        #     ksize += 1
 
         kernel = FilterService._gaussian_kernel(ksize, sigma)
 
@@ -111,8 +111,8 @@ class FilterService:
             return None
 
         ksize = max(3, kernel_size)
-        if ksize % 2 == 0:
-            ksize += 1
+        # if ksize % 2 == 0:
+        #     ksize += 1
 
         pad = ksize // 2
 

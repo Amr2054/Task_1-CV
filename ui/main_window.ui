@@ -569,10 +569,17 @@ padding: 20px;</string>
         <number>12</number>
        </property>
        <item>
+
+
+
         <widget class="QStackedWidget" name="settingsStack">
          <property name="currentIndex">
           <number>0</number>
          </property>
+         <!-- ========================================
+              PAGE 0: Noise & Filters Mode
+              Contains: Noise controls + Filter controls
+              ======================================== -->
          <widget class="QWidget" name="noiseFilterPage">
           <layout class="QHBoxLayout" name="horizontalLayout_3">
            <property name="spacing">
@@ -1306,6 +1313,10 @@ padding: 20px;</string>
            </item>
           </layout>
          </widget>
+         <!-- ========================================
+              PAGE 1: Edge Detection Mode
+              Contains: Edge detection methods (Canny, Sobel, Prewitt, Roberts)
+              ======================================== -->
 <widget class="QWidget" name="edgeDetectionPage">
  <layout class="QHBoxLayout" name="horizontalLayout_7">
   <property name="spacing">
@@ -1451,6 +1462,10 @@ padding: 20px;</string>
 
  </layout>
 </widget>
+         <!-- ========================================
+              PAGE 2: Histogram & Normalize Mode
+              Contains: Histogram, Distribution curves, Equalization, Normalize
+              ======================================== -->
          <widget class="QWidget" name="histogramPage">
           <layout class="QHBoxLayout" name="horizontalLayout_5">
            <property name="spacing">
@@ -1626,10 +1641,10 @@ padding: 20px;</string>
           </layout>
          </widget>
 
-
-
-
-        
+     <!-- ========================================
+              PAGE 3: Frequency Domain & Hybrid Mode
+              Contains: Low Pass, High Pass filters + Hybrid image generation
+              ======================================== -->
         <widget class="QWidget" name="frequencyPage">
             <layout class="QVBoxLayout" name="verticalLayout_freqOuter">
             <property name="spacing"><number>16</number></property>

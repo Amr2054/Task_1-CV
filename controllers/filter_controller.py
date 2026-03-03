@@ -29,7 +29,7 @@ class FilterController:
     def _connect_signals(self):
         """Connect filter-related signals to slots"""
         mc = self.main_controller
-        mc.btnApplyFilter.clicked.connect(self._apply_filter)
+        mc.btnApplyFilter.clicked.connect(self._apply_filter)  #click apply filter
         mc.sliderSigma.valueChanged.connect(lambda v: mc.labelSigmaValue.setText(f"{v/10:.1f}"))
         mc.radioGaussianFilter.toggled.connect(lambda checked: mc.sigmaContainer.setVisible(checked))
         mc.sliderSigma.valueChanged.emit(mc.sliderSigma.value())  # Initialize label

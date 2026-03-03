@@ -1085,7 +1085,7 @@ padding: 20px;</string>
                    </property>
                    <item>
                     <property name="text">
-                     <string>Current Image (with Noise)</string>
+                     <string>Current Image</string>
                     </property>
                    </item>
                    <item>
